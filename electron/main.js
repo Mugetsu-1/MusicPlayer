@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, protocol } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -7,6 +7,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+
+// Register custom protocol for local audio files
+app.whenReady().then(() => {
+  protocol.registerFileProtocol('local-audio', (request, callback) => {
+    const filePath = decodeURIComponent(request.url.replace('local-audio://', ''));
+    callback({ path: filePath });
+  });
+
+  createWindow();
+});
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -35,8 +45,6 @@ function createWindow() {
     mainWindow = null;
   });
 }
-
-app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

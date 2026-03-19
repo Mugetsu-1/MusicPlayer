@@ -132,6 +132,15 @@ function App() {
     }
   };
 
+  // Get the source URL for a track (convert local paths to local-audio:// URLs)
+  const getTrackSource = (track) => {
+    if (track.isLocal) {
+      // Use custom protocol for local files
+      return `local-audio://${encodeURIComponent(track.url)}`;
+    }
+    return track.url;
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-star-white overflow-hidden">
       <StarfieldBackground />
@@ -273,7 +282,7 @@ function App() {
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={handleTrackEnd}
           >
-            <source src={currentTrack.url} type="audio/mpeg" />
+            <source src={getTrackSource(currentTrack)} type="audio/mpeg" />
             Your browser does not support the audio element.
           </audio>
         </motion.div>
