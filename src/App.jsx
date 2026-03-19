@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { FolderOpen, File } from 'lucide-react';
 import StarfieldBackground from './components/StarfieldBackground';
 import PlayerControls from './components/PlayerControls';
 import ProgressBar from './components/ProgressBar';
@@ -8,7 +9,7 @@ import { mockTracks } from './data/tracks';
 import './index.css';
 
 function App() {
-  const [tracks] = useState(mockTracks);
+  const [tracks, setTracks] = useState(mockTracks);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -108,6 +109,29 @@ function App() {
     setIsPlaying(true);
   };
 
+  // Check if running in Electron
+  const isElectron = typeof window !== 'undefined' && window.electronAPI;
+
+  // Handle file selection
+  const handleOpenFiles = async () => {
+    if (isElectron) {
+      const newTracks = await window.electronAPI.openFiles();
+      if (newTracks.length > 0) {
+        setTracks([...tracks, ...newTracks]);
+      }
+    }
+  };
+
+  // Handle folder selection
+  const handleOpenFolder = async () => {
+    if (isElectron) {
+      const newTracks = await window.electronAPI.openFolder();
+      if (newTracks.length > 0) {
+        setTracks([...tracks, ...newTracks]);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-star-white overflow-hidden">
       <StarfieldBackground />
@@ -130,6 +154,30 @@ function App() {
               Galactic Music Player
             </h1>
             <p className="text-star-white/60">Navigate the cosmos through sound</p>
+
+            {/* Local File Loading Buttons */}
+            {isElectron && (
+              <div className="flex gap-4 justify-center mt-6">
+                <motion.button
+                  onClick={handleOpenFiles}
+                  className="flex items-center gap-2 px-4 py-2 bg-space-blue/20 border border-space-blue/50 rounded-lg hover:bg-space-blue/30 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <File className="w-4 h-4" />
+                  <span>Add Files</span>
+                </motion.button>
+                <motion.button
+                  onClick={handleOpenFolder}
+                  className="flex items-center gap-2 px-4 py-2 bg-space-purple/20 border border-space-purple/50 rounded-lg hover:bg-space-purple/30 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FolderOpen className="w-4 h-4" />
+                  <span>Add Folder</span>
+                </motion.button>
+              </div>
+            )}
           </motion.div>
 
           {/* Main Player Container */}
