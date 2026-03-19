@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import { RGB_COLORS } from '../constants/colors';
+import { CANVAS_CONFIG } from '../constants/config';
 
 const StarfieldBackground = () => {
   const canvasRef = useRef(null);
+  const frameCountRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -11,17 +14,10 @@ const StarfieldBackground = () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Create neon particles
+    const colors = [RGB_COLORS.CYAN, RGB_COLORS.MAGENTA, RGB_COLORS.PINK];
     const particles = [];
-    const numParticles = 100;
 
-    const colors = [
-      { r: 0, g: 255, b: 255 },   // Cyan
-      { r: 255, g: 0, b: 255 },   // Magenta
-      { r: 255, g: 0, b: 128 },   // Pink
-    ];
-
-    for (let i = 0; i < numParticles; i++) {
+    for (let i = 0; i < CANVAS_CONFIG.PARTICLE_COUNT; i++) {
       const color = colors[Math.floor(Math.random() * colors.length)];
       particles.push({
         x: Math.random() * canvas.width,
@@ -35,59 +31,44 @@ const StarfieldBackground = () => {
       });
     }
 
-    // Create grid lines
-    const gridLines = [];
-    const gridSpacing = 60;
-
-    for (let x = 0; x < canvas.width; x += gridSpacing) {
-      gridLines.push({ type: 'vertical', pos: x });
-    }
-    for (let y = 0; y < canvas.height; y += gridSpacing) {
-      gridLines.push({ type: 'horizontal', pos: y });
-    }
-
     const animate = () => {
-      // Clear with fade effect
+      frameCountRef.current += 1;
+
       ctx.fillStyle = 'rgba(5, 5, 8, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw grid
       ctx.strokeStyle = 'rgba(0, 255, 255, 0.03)';
       ctx.lineWidth = 1;
 
-      gridLines.forEach(line => {
+      for (let x = 0; x < canvas.width; x += CANVAS_CONFIG.GRID_SPACING) {
         ctx.beginPath();
-        if (line.type === 'vertical') {
-          ctx.moveTo(line.pos, 0);
-          ctx.lineTo(line.pos, canvas.height);
-        } else {
-          ctx.moveTo(0, line.pos);
-          ctx.lineTo(canvas.width, line.pos);
-        }
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
         ctx.stroke();
-      });
+      }
 
-      // Draw and update particles
+      for (let y = 0; y < canvas.height; y += CANVAS_CONFIG.GRID_SPACING) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
       particles.forEach((particle) => {
-        // Move particle
         particle.x += particle.vx;
         particle.y += particle.vy;
 
-        // Wrap around screen
         if (particle.x < 0) particle.x = canvas.width;
         if (particle.x > canvas.width) particle.x = 0;
         if (particle.y < 0) particle.y = canvas.height;
         if (particle.y > canvas.height) particle.y = 0;
 
-        // Twinkle
         particle.opacity += particle.speed * 0.02;
         if (particle.opacity > 0.8 || particle.opacity < 0.2) {
           particle.speed = -particle.speed;
         }
 
         const { r, g, b } = particle.color;
-
-        // Draw glow
         const gradient = ctx.createRadialGradient(
           particle.x, particle.y, 0,
           particle.x, particle.y, particle.radius * 4
@@ -100,15 +81,13 @@ const StarfieldBackground = () => {
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Draw core
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${particle.opacity * 1.5})`;
         ctx.fill();
       });
 
-      // Draw occasional scan line
-      const scanY = (Date.now() * 0.1) % canvas.height;
+      const scanY = (frameCountRef.current * CANVAS_CONFIG.SCAN_LINE_SPEED) % canvas.height;
       ctx.fillStyle = 'rgba(0, 255, 255, 0.03)';
       ctx.fillRect(0, scanY, canvas.width, 2);
 

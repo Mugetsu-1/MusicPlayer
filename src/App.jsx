@@ -1,51 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FolderOpen, File, Music } from 'lucide-react';
 import StarfieldBackground from './components/StarfieldBackground';
 import PlayerControls from './components/PlayerControls';
 import ProgressBar from './components/ProgressBar';
 import TrackList from './components/TrackList';
+import CornerDecoration from './components/CornerDecoration';
+import FileActionButton from './components/FileActionButton';
+import { loadTracksFromStorage, saveTracksToStorage, getTrackSource } from './utils/trackUtils';
+import { STORAGE_KEY, UI_STRINGS } from './constants/strings';
+import { PLAYER_CONFIG, ANIMATION_CONFIG } from './constants/config';
+import { GLOW_EFFECTS } from './constants/effects';
 import './index.css';
 
-const STORAGE_KEY = 'galactic-music-player-tracks';
-
-// Load tracks from localStorage
-const loadTracksFromStorage = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-// Save tracks to localStorage
-const saveTracksToStorage = (tracks) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
-  } catch (e) {
-    console.error('Failed to save tracks:', e);
-  }
-};
-
 function App() {
-  const [tracks, setTracks] = useState(loadTracksFromStorage);
+  const [tracks, setTracks] = useState(() => loadTracksFromStorage(STORAGE_KEY));
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(70);
+  const [volume, setVolume] = useState(PLAYER_CONFIG.DEFAULT_VOLUME);
   const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef(null);
 
-  const currentTrack = tracks[currentTrackIndex] || null;
+  const currentTrack = useMemo(() => tracks[currentTrackIndex] || null, [tracks, currentTrackIndex]);
 
-  // Save tracks to localStorage whenever they change
   useEffect(() => {
-    saveTracksToStorage(tracks);
+    saveTracksToStorage(STORAGE_KEY, tracks);
   }, [tracks]);
 
-  // Update audio element when track changes
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.load();
@@ -55,45 +38,25 @@ function App() {
     }
   }, [currentTrackIndex]);
 
-  // Update volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
   }, [volume]);
 
-  // Handle time update
-  const handleTimeUpdate = () => {
+  const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
     }
-  };
+  }, []);
 
-  // Handle metadata loaded
-  const handleLoadedMetadata = () => {
+  const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
     }
-  };
+  }, []);
 
-  // Handle track end
-  const handleTrackEnd = () => {
-    handleNext();
-  };
-
-  // Play/Pause toggle
-  const handlePlayPause = () => {
-    if (!currentTrack || !audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  // Next track
-  const handleNext = () => {
+  const handleTrackEnd = useCallback(() => {
     if (tracks.length === 0) return;
     if (isShuffled) {
       const randomIndex = Math.floor(Math.random() * tracks.length);
@@ -102,73 +65,83 @@ function App() {
       setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
     }
     setIsPlaying(true);
-  };
+  }, [tracks.length, isShuffled]);
 
-  // Previous track
-  const handlePrevious = () => {
+  const handlePlayPause = useCallback(() => {
+    if (!currentTrack || !audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  }, [currentTrack, isPlaying]);
+
+  const handleNext = useCallback(() => {
     if (tracks.length === 0) return;
-    if (currentTime > 3 && audioRef.current) {
+    if (isShuffled) {
+      const randomIndex = Math.floor(Math.random() * tracks.length);
+      setCurrentTrackIndex(randomIndex);
+    } else {
+      setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
+    }
+    setIsPlaying(true);
+  }, [tracks.length, isShuffled]);
+
+  const handlePrevious = useCallback(() => {
+    if (tracks.length === 0) return;
+    if (currentTime > PLAYER_CONFIG.SEEK_THRESHOLD && audioRef.current) {
       audioRef.current.currentTime = 0;
     } else {
       setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + tracks.length) % tracks.length);
     }
     setIsPlaying(true);
-  };
+  }, [tracks.length, currentTime]);
 
-  // Shuffle toggle
-  const handleShuffle = () => {
+  const handleShuffle = useCallback(() => {
     setIsShuffled(!isShuffled);
-  };
+  }, [isShuffled]);
 
-  // Seek
-  const handleSeek = (time) => {
+  const handleSeek = useCallback((time) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
     }
-  };
+  }, []);
 
-  // Track selection
-  const handleTrackSelect = (index) => {
+  const handleTrackSelect = useCallback((index) => {
     setCurrentTrackIndex(index);
     setIsPlaying(true);
-  };
+  }, []);
 
-  // Check if running in Electron
   const isElectron = typeof window !== 'undefined' && window.electronAPI;
 
-  // Handle file selection
-  const handleOpenFiles = async () => {
+  const handleOpenFiles = useCallback(async () => {
     if (isElectron) {
       const newTracks = await window.electronAPI.openFiles();
       if (newTracks.length > 0) {
-        setTracks([...tracks, ...newTracks]);
+        setTracks((prevTracks) => [...prevTracks, ...newTracks]);
       }
     }
-  };
+  }, [isElectron]);
 
-  // Handle folder selection
-  const handleOpenFolder = async () => {
+  const handleOpenFolder = useCallback(async () => {
     if (isElectron) {
       const newTracks = await window.electronAPI.openFolder();
       if (newTracks.length > 0) {
-        setTracks([...tracks, ...newTracks]);
+        setTracks((prevTracks) => [...prevTracks, ...newTracks]);
       }
     }
-  };
+  }, [isElectron]);
 
-  // Get the source URL for a track (convert local paths to local-audio:// URLs)
-  const getTrackSource = (track) => {
-    if (track.isLocal) {
-      // Use custom protocol for local files
-      return `local-audio://${encodeURIComponent(track.url)}`;
-    }
-    return track.url;
-  };
+  const visualizerGlow = useMemo(() => {
+    return isPlaying
+      ? [GLOW_EFFECTS.MAGENTA_STRONG, GLOW_EFFECTS.ACTIVE_STRONG, GLOW_EFFECTS.MAGENTA_STRONG]
+      : GLOW_EFFECTS.MAGENTA_LIGHT;
+  }, [isPlaying]);
 
   return (
     <div className="min-h-screen bg-cyber-darker text-star-white overflow-hidden cyber-grid relative">
-      {/* Scanline overlay */}
       <div className="fixed inset-0 pointer-events-none scanlines z-50" />
 
       <StarfieldBackground />
@@ -177,10 +150,9 @@ function App() {
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: ANIMATION_CONFIG.FADE_IN }}
           className="w-full max-w-4xl"
         >
-          {/* Header */}
           <motion.div
             className="text-center mb-8"
             initial={{ opacity: 0 }}
@@ -188,78 +160,55 @@ function App() {
             transition={{ delay: 0.3 }}
           >
             <h1 className="font-cyber text-4xl md:text-5xl font-bold mb-2 text-neon-cyan text-glow-cyan tracking-wider">
-              NEON PLAYER
+              {UI_STRINGS.PLAYER_TITLE}
             </h1>
             <p className="text-neon-magenta/80 font-medium tracking-widest uppercase text-sm">
-              // AUDIO SYSTEM v2.0
+              {UI_STRINGS.PLAYER_SUBTITLE}
             </p>
 
-            {/* Local File Loading Buttons */}
             {isElectron && (
               <div className="flex gap-4 justify-center mt-6">
-                <motion.button
+                <FileActionButton
+                  icon={File}
+                  label={UI_STRINGS.ADD_FILES}
                   onClick={handleOpenFiles}
-                  className="flex items-center gap-2 px-6 py-3 bg-transparent neon-border-cyan text-neon-cyan font-cyber text-sm uppercase tracking-wider hover:bg-neon-cyan/10 transition-all duration-300 glitch"
-                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px #00ffff, 0 0 40px #00ffff' }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <File className="w-4 h-4" />
-                  <span>Add Files</span>
-                </motion.button>
-                <motion.button
+                  variant="cyan"
+                />
+                <FileActionButton
+                  icon={FolderOpen}
+                  label={UI_STRINGS.ADD_FOLDER}
                   onClick={handleOpenFolder}
-                  className="flex items-center gap-2 px-6 py-3 bg-transparent neon-border-magenta text-neon-magenta font-cyber text-sm uppercase tracking-wider hover:bg-neon-magenta/10 transition-all duration-300 glitch"
-                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px #ff00ff, 0 0 40px #ff00ff' }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FolderOpen className="w-4 h-4" />
-                  <span>Add Folder</span>
-                </motion.button>
+                  variant="magenta"
+                />
               </div>
             )}
           </motion.div>
 
-          {/* Main Player Container */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Side - Player Console */}
             <motion.div
               className="relative bg-cyber-dark/80 backdrop-blur-md neon-border-cyan p-8"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
             >
-              {/* Corner decorations */}
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-neon-cyan" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-neon-cyan" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-cyan" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-cyan" />
+              <CornerDecoration color="neon-cyan" />
 
-              {/* Visualizer / Album Art */}
               <motion.div
                 className="w-full aspect-square mb-6 bg-cyber-darker border border-neon-magenta/30 flex items-center justify-center overflow-hidden relative"
-                animate={{
-                  boxShadow: isPlaying
-                    ? [
-                        '0 0 20px rgba(255, 0, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)',
-                        '0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 50px rgba(255, 0, 255, 0.1)',
-                        '0 0 20px rgba(255, 0, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)',
-                      ]
-                    : '0 0 10px rgba(255, 0, 255, 0.1)',
-                }}
+                animate={{ boxShadow: visualizerGlow }}
                 transition={{
-                  duration: 2,
+                  duration: ANIMATION_CONFIG.GLOW_PULSE,
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
               >
-                {/* Animated rings */}
                 <motion.div
                   className="absolute w-40 h-40 border-2 border-neon-cyan/50 rounded-full"
                   animate={{
                     scale: isPlaying ? [1, 1.5, 1] : 1,
                     opacity: isPlaying ? [0.5, 0, 0.5] : 0.3,
                   }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  transition={{ duration: ANIMATION_CONFIG.GLOW_PULSE, repeat: Infinity }}
                 />
                 <motion.div
                   className="absolute w-32 h-32 border-2 border-neon-magenta/50 rounded-full"
@@ -267,18 +216,17 @@ function App() {
                     scale: isPlaying ? [1, 1.8, 1] : 1,
                     opacity: isPlaying ? [0.5, 0, 0.5] : 0.3,
                   }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                  transition={{ duration: ANIMATION_CONFIG.GLOW_PULSE, repeat: Infinity, delay: 0.3 }}
                 />
 
-                {/* Center disc */}
                 <motion.div
                   className="w-24 h-24 rounded-full bg-gradient-to-br from-neon-cyan via-neon-magenta to-neon-pink relative"
-                  style={{ boxShadow: '0 0 30px #ff00ff, 0 0 60px #00ffff' }}
+                  style={{ boxShadow: GLOW_EFFECTS.MAGENTA_STRONG }}
                   animate={{
                     rotate: isPlaying ? 360 : 0,
                   }}
                   transition={{
-                    rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+                    rotate: { duration: ANIMATION_CONFIG.SPIN, repeat: Infinity, ease: 'linear' },
                   }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -286,7 +234,6 @@ function App() {
                   </div>
                 </motion.div>
 
-                {/* Music icon when no track */}
                 {!currentTrack && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Music className="w-16 h-16 text-neon-cyan/30" />
@@ -294,17 +241,15 @@ function App() {
                 )}
               </motion.div>
 
-              {/* Now Playing */}
               <div className="text-center mb-6">
                 <h2 className="font-cyber text-xl font-bold text-neon-cyan mb-1 tracking-wide truncate">
-                  {currentTrack ? currentTrack.title : '[ NO SIGNAL ]'}
+                  {currentTrack ? currentTrack.title : UI_STRINGS.NO_SIGNAL}
                 </h2>
                 <p className="text-neon-magenta/60 text-sm tracking-widest uppercase">
-                  {currentTrack ? currentTrack.artist : 'AWAITING INPUT'}
+                  {currentTrack ? currentTrack.artist : UI_STRINGS.AWAITING_INPUT}
                 </p>
               </div>
 
-              {/* Progress Bar */}
               <div className="mb-6">
                 <ProgressBar
                   currentTime={currentTime}
@@ -313,7 +258,6 @@ function App() {
                 />
               </div>
 
-              {/* Player Controls */}
               <PlayerControls
                 isPlaying={isPlaying}
                 onPlayPause={handlePlayPause}
@@ -326,22 +270,17 @@ function App() {
               />
             </motion.div>
 
-            {/* Right Side - Track List */}
             <motion.div
               className="relative bg-cyber-dark/80 backdrop-blur-md neon-border-magenta p-6"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7 }}
             >
-              {/* Corner decorations */}
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-neon-magenta" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-neon-magenta" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-magenta" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-magenta" />
+              <CornerDecoration color="neon-magenta" />
 
               <h3 className="font-cyber text-lg font-bold mb-4 text-neon-magenta tracking-wider flex items-center gap-2">
                 <span className="w-2 h-2 bg-neon-magenta rounded-full animate-pulse" />
-                PLAYLIST
+                {UI_STRINGS.PLAYLIST}
               </h3>
               <TrackList
                 tracks={tracks}
@@ -351,7 +290,6 @@ function App() {
             </motion.div>
           </div>
 
-          {/* Audio Element */}
           {currentTrack && (
             <audio
               ref={audioRef}

@@ -1,0 +1,31 @@
+export const PLAYER_CONFIG = {
+  SEEK_THRESHOLD: 3,
+  VOLUME_MIN: 0,
+  VOLUME_MAX: 100,
+  DEFAULT_VOLUME: 70,
+};
+
+export const CANVAS_CONFIG = {
+  PARTICLE_COUNT: 100,
+  GRID_SPACING: 60,
+  SCAN_LINE_SPEED: 0.1,
+};
+
+export const PROGRESS_BAR = {
+  GRID_LINES: 20,
+  GRID_LINE_SPACING: 5,
+};
+
+export const TRACK_LIST = {
+  ANIMATION_DELAY_MULTIPLIER: 0.03,
+  MAX_HEIGHT: 'max-h-80',
+};
+
+export const ANIMATION_CONFIG = {
+  BUTTON_STAGGER: 0.03,
+  FADE_IN: 0.8,
+  GLOW_PULSE: 2,
+  SPIN: 3,
+  PROGRESS_UPDATE: 0.1,
+  SLIDER_BLUR: 0.5,
+};
