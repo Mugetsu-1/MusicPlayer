@@ -1,10 +1,12 @@
 # 🌌 Galactic Music Player
 
-A beautiful, space-themed music player built with React, featuring a stunning "Deep Space" aesthetic with glassmorphism effects and smooth animations.
+A beautiful, space-themed **local music player desktop application** built with Electron and React, featuring a stunning "Deep Space" aesthetic with glassmorphism effects and smooth animations.
 
 ## ✨ Features
 
 - **🎵 Core Functionality**
+  - Play local music files (MP3, WAV, OGG, FLAC, M4A, AAC)
+  - Add individual files or entire folders
   - Play, Pause, Skip Next, Skip Previous controls
   - Shuffle mode for random playback
   - Functional progress bar with seek capability
@@ -20,14 +22,16 @@ A beautiful, space-themed music player built with React, featuring a stunning "D
   - Deep space color palette (midnight blue to black gradient)
 
 - **📱 User Interface**
-  - Responsive design that works on desktop and mobile
+  - Responsive design that works on desktop
   - Scrollable playlist with visual feedback
   - Active track highlighting with rotating pulse icon
   - Custom-styled progress bar resembling a "warp drive" indicator
   - Hover effects with glowing neon accents
+  - File and Folder picker buttons for easy music loading
 
 ## 🚀 Tech Stack
 
+- **Electron** - Desktop app framework
 - **React** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
@@ -47,12 +51,40 @@ cd MusicPlayer
 npm install
 ```
 
-3. Start the development server:
+## 🎮 Development
+
+Start the Electron app in development mode:
 ```bash
-npm run dev
+npm run electron:dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+This will open the application window with hot-reload enabled.
+
+## 🛠️ Build for Production
+
+Build the Electron app for your platform:
+
+**For Windows:**
+```bash
+npm run electron:build:win
+```
+
+**For macOS:**
+```bash
+npm run electron:build:mac
+```
+
+**For Linux:**
+```bash
+npm run electron:build:linux
+```
+
+**For all platforms:**
+```bash
+npm run electron:build
+```
+
+The packaged application will be available in the `release/` directory.
 
 ## 🎨 Color Palette
 
@@ -76,34 +108,45 @@ A custom-styled seek bar that displays current time vs. total duration with a gr
 ### TrackList.jsx
 Scrollable list of tracks with the active song highlighted and featuring a pulsing orbit icon.
 
-## 🔊 Audio Sources
+## 🔊 Adding Music
 
-The player uses mock tracks with audio URLs from SoundHelix (royalty-free music generator). You can replace these with your own audio files by updating the `src/data/tracks.js` file.
+The application supports loading local music files in two ways:
+
+1. **Add Files**: Click the "Add Files" button to select individual audio files
+2. **Add Folder**: Click the "Add Folder" button to load all audio files from a directory
+
+Supported formats: MP3, WAV, OGG, FLAC, M4A, AAC
+
+The player comes with sample tracks from SoundHelix (royalty-free music generator) for demonstration purposes.
 
 ## 📝 Usage
 
-1. Click on any track in the playlist to start playing
-2. Use the main play/pause button to control playback
-3. Skip forward or backward using the skip buttons
-4. Enable shuffle mode for random track playback
-5. Adjust volume using the volume slider
-6. Click anywhere on the progress bar to seek to a specific time
+1. Launch the application
+2. Click "Add Files" or "Add Folder" to load your music
+3. Click on any track in the playlist to start playing
+4. Use the main play/pause button to control playback
+5. Skip forward or backward using the skip buttons
+6. Enable shuffle mode for random track playback
+7. Adjust volume using the volume slider
+8. Click anywhere on the progress bar to seek to a specific time
 
-## 🛠️ Build for Production
+## 🖥️ Application Architecture
+
+The application consists of three main parts:
+
+- **electron/main.js**: Main process handling window creation and file system operations
+- **electron/preload.js**: Preload script for secure IPC communication
+- **src/**: React application source code
+
+## 🌐 Web Version (Optional)
+
+You can also run the app as a web application (without local file support):
 
 ```bash
-npm run build
+npm run dev
 ```
 
-The build artifacts will be stored in the `dist/` directory.
-
-## 🌟 Preview
-
-To preview the production build locally:
-
-```bash
-npm run preview
-```
+Then open your browser and navigate to `http://localhost:5173`
 
 ## 📄 License
 
