@@ -13,6 +13,22 @@ export default defineConfig({
       },
       {
         entry: 'electron/preload.cjs',
+        vite: {
+          build: {
+            lib: {
+              entry: 'electron/preload.cjs',
+              formats: ['cjs'],
+              fileName: () => 'preload.cjs'
+            },
+            minify: false,
+            rollupOptions: {
+              output: {
+                format: 'cjs',
+                entryFileNames: 'preload.cjs'
+              }
+            }
+          }
+        },
         onstart(options) {
           options.reload()
         },
