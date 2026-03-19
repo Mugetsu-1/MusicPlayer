@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const PlayerControls = ({
@@ -15,87 +15,104 @@ const PlayerControls = ({
   const buttonVariants = {
     hover: {
       scale: 1.1,
-      boxShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
       transition: { duration: 0.2 }
     },
     tap: { scale: 0.95 }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="flex items-center space-x-6">
+    <div className="flex flex-col items-center space-y-6">
+      <div className="flex items-center space-x-4">
+        {/* Shuffle */}
         <motion.button
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
           onClick={onShuffle}
-          className={`p-3 rounded-full backdrop-blur-md transition-all ${
+          className={`p-3 border transition-all duration-300 ${
             isShuffled
-              ? 'bg-space-blue/30 text-space-blue border border-space-blue'
-              : 'bg-white/10 text-star-white border border-white/20'
+              ? 'bg-neon-green/20 text-neon-green border-neon-green shadow-neon-green'
+              : 'bg-transparent text-neon-cyan/50 border-neon-cyan/30 hover:border-neon-cyan hover:text-neon-cyan'
           }`}
           aria-label="Shuffle"
         >
-          <Shuffle size={20} />
+          <Shuffle size={18} />
         </motion.button>
 
+        {/* Previous */}
         <motion.button
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
           onClick={onPrevious}
-          className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-star-white"
+          className="p-3 bg-transparent border border-neon-cyan/30 text-neon-cyan hover:border-neon-cyan hover:shadow-neon-cyan transition-all duration-300"
           aria-label="Previous"
         >
-          <SkipBack size={24} />
+          <SkipBack size={22} />
         </motion.button>
 
+        {/* Play/Pause */}
         <motion.button
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
           onClick={onPlayPause}
-          className="p-5 rounded-full bg-gradient-to-r from-space-blue to-space-purple backdrop-blur-md border-2 border-space-blue shadow-lg shadow-space-blue/50"
+          className="relative p-5 bg-gradient-to-br from-neon-cyan via-neon-magenta to-neon-pink text-cyber-darker"
+          style={{
+            boxShadow: isPlaying
+              ? '0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #00ffff'
+              : '0 0 10px #00ffff, 0 0 20px #ff00ff'
+          }}
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
-          {isPlaying ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" />}
+          {isPlaying ? (
+            <Pause size={28} fill="currentColor" />
+          ) : (
+            <Play size={28} fill="currentColor" className="ml-1" />
+          )}
         </motion.button>
 
+        {/* Next */}
         <motion.button
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
           onClick={onNext}
-          className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-star-white"
+          className="p-3 bg-transparent border border-neon-cyan/30 text-neon-cyan hover:border-neon-cyan hover:shadow-neon-cyan transition-all duration-300"
           aria-label="Next"
         >
-          <SkipForward size={24} />
+          <SkipForward size={22} />
         </motion.button>
 
-        <motion.button
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
-          className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-star-white"
-          aria-label="Volume"
+        {/* Volume Icon */}
+        <motion.div
+          className="p-3 text-neon-magenta/50"
         >
-          <Volume2 size={20} />
-        </motion.button>
+          {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </motion.div>
       </div>
 
-      <div className="flex items-center space-x-3 w-48">
-        <Volume2 size={16} className="text-star-white" />
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={volume}
-          onChange={(e) => onVolumeChange(e.target.value)}
-          className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-space-blue"
-          style={{
-            background: `linear-gradient(to right, #00d9ff ${volume}%, rgba(255,255,255,0.2) ${volume}%)`
-          }}
-        />
+      {/* Volume Slider */}
+      <div className="flex items-center space-x-3 w-full max-w-[200px]">
+        <span className="text-neon-cyan/50 text-xs font-cyber">VOL</span>
+        <div className="relative flex-1 h-1 bg-cyber-darker border border-neon-cyan/20">
+          <motion.div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-neon-cyan to-neon-magenta"
+            style={{ width: `${volume}%` }}
+            animate={{
+              boxShadow: volume > 0 ? '0 0 10px #00ffff' : 'none'
+            }}
+          />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={volume}
+            onChange={(e) => onVolumeChange(Number(e.target.value))}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer"
+          />
+        </div>
+        <span className="text-neon-magenta text-xs font-cyber w-8">{volume}%</span>
       </div>
     </div>
   );

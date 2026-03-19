@@ -167,7 +167,10 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-star-white overflow-hidden">
+    <div className="min-h-screen bg-cyber-darker text-star-white overflow-hidden cyber-grid relative">
+      {/* Scanline overlay */}
+      <div className="fixed inset-0 pointer-events-none scanlines z-50" />
+
       <StarfieldBackground />
 
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
@@ -184,18 +187,20 @@ function App() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-space-blue via-space-purple to-space-orange bg-clip-text text-transparent">
-              Galactic Music Player
+            <h1 className="font-cyber text-4xl md:text-5xl font-bold mb-2 text-neon-cyan text-glow-cyan tracking-wider">
+              NEON PLAYER
             </h1>
-            <p className="text-star-white/60">Navigate the cosmos through sound</p>
+            <p className="text-neon-magenta/80 font-medium tracking-widest uppercase text-sm">
+              // AUDIO SYSTEM v2.0
+            </p>
 
             {/* Local File Loading Buttons */}
             {isElectron && (
               <div className="flex gap-4 justify-center mt-6">
                 <motion.button
                   onClick={handleOpenFiles}
-                  className="flex items-center gap-2 px-4 py-2 bg-space-blue/20 border border-space-blue/50 rounded-lg hover:bg-space-blue/30 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-2 px-6 py-3 bg-transparent neon-border-cyan text-neon-cyan font-cyber text-sm uppercase tracking-wider hover:bg-neon-cyan/10 transition-all duration-300 glitch"
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px #00ffff, 0 0 40px #00ffff' }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <File className="w-4 h-4" />
@@ -203,8 +208,8 @@ function App() {
                 </motion.button>
                 <motion.button
                   onClick={handleOpenFolder}
-                  className="flex items-center gap-2 px-4 py-2 bg-space-purple/20 border border-space-purple/50 rounded-lg hover:bg-space-purple/30 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-2 px-6 py-3 bg-transparent neon-border-magenta text-neon-magenta font-cyber text-sm uppercase tracking-wider hover:bg-neon-magenta/10 transition-all duration-300 glitch"
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px #ff00ff, 0 0 40px #ff00ff' }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <FolderOpen className="w-4 h-4" />
@@ -218,22 +223,28 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Side - Player Console */}
             <motion.div
-              className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl"
+              className="relative bg-cyber-dark/80 backdrop-blur-md neon-border-cyan p-8"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
             >
-              {/* Album Art Placeholder */}
+              {/* Corner decorations */}
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-neon-cyan" />
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-neon-cyan" />
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-cyan" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-cyan" />
+
+              {/* Visualizer / Album Art */}
               <motion.div
-                className="w-full aspect-square mb-6 rounded-xl bg-gradient-to-br from-space-blue/20 to-space-purple/20 border border-space-blue/30 flex items-center justify-center overflow-hidden relative"
+                className="w-full aspect-square mb-6 bg-cyber-darker border border-neon-magenta/30 flex items-center justify-center overflow-hidden relative"
                 animate={{
                   boxShadow: isPlaying
                     ? [
-                        '0 0 20px rgba(0, 217, 255, 0.3)',
-                        '0 0 40px rgba(168, 85, 247, 0.3)',
-                        '0 0 20px rgba(0, 217, 255, 0.3)',
+                        '0 0 20px rgba(255, 0, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)',
+                        '0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 50px rgba(255, 0, 255, 0.1)',
+                        '0 0 20px rgba(255, 0, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)',
                       ]
-                    : '0 0 0px rgba(0, 217, 255, 0)',
+                    : '0 0 10px rgba(255, 0, 255, 0.1)',
                 }}
                 transition={{
                   duration: 2,
@@ -241,25 +252,56 @@ function App() {
                   ease: 'easeInOut',
                 }}
               >
+                {/* Animated rings */}
                 <motion.div
-                  className="w-32 h-32 rounded-full bg-gradient-to-r from-space-blue to-space-purple"
+                  className="absolute w-40 h-40 border-2 border-neon-cyan/50 rounded-full"
+                  animate={{
+                    scale: isPlaying ? [1, 1.5, 1] : 1,
+                    opacity: isPlaying ? [0.5, 0, 0.5] : 0.3,
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <motion.div
+                  className="absolute w-32 h-32 border-2 border-neon-magenta/50 rounded-full"
+                  animate={{
+                    scale: isPlaying ? [1, 1.8, 1] : 1,
+                    opacity: isPlaying ? [0.5, 0, 0.5] : 0.3,
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                />
+
+                {/* Center disc */}
+                <motion.div
+                  className="w-24 h-24 rounded-full bg-gradient-to-br from-neon-cyan via-neon-magenta to-neon-pink relative"
+                  style={{ boxShadow: '0 0 30px #ff00ff, 0 0 60px #00ffff' }}
                   animate={{
                     rotate: isPlaying ? 360 : 0,
-                    scale: isPlaying ? [1, 1.1, 1] : 1,
                   }}
                   transition={{
                     rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
-                    scale: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
                   }}
-                />
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-cyber-darker border-2 border-neon-cyan" />
+                  </div>
+                </motion.div>
+
+                {/* Music icon when no track */}
+                {!currentTrack && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Music className="w-16 h-16 text-neon-cyan/30" />
+                  </div>
+                )}
               </motion.div>
 
               {/* Now Playing */}
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-star-white mb-1">
-                  {currentTrack ? currentTrack.title : 'No Track Selected'}
+                <h2 className="font-cyber text-xl font-bold text-neon-cyan mb-1 tracking-wide truncate">
+                  {currentTrack ? currentTrack.title : '[ NO SIGNAL ]'}
                 </h2>
-                <p className="text-star-white/60">{currentTrack ? currentTrack.artist : 'Add music to start'}</p>
+                <p className="text-neon-magenta/60 text-sm tracking-widest uppercase">
+                  {currentTrack ? currentTrack.artist : 'AWAITING INPUT'}
+                </p>
               </div>
 
               {/* Progress Bar */}
@@ -286,12 +328,21 @@ function App() {
 
             {/* Right Side - Track List */}
             <motion.div
-              className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl"
+              className="relative bg-cyber-dark/80 backdrop-blur-md neon-border-magenta p-6"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <h3 className="text-xl font-bold mb-4 text-space-blue">Playlist</h3>
+              {/* Corner decorations */}
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-neon-magenta" />
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-neon-magenta" />
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-magenta" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-magenta" />
+
+              <h3 className="font-cyber text-lg font-bold mb-4 text-neon-magenta tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 bg-neon-magenta rounded-full animate-pulse" />
+                PLAYLIST
+              </h3>
               <TrackList
                 tracks={tracks}
                 currentTrackIndex={currentTrackIndex}
