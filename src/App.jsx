@@ -1,15 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FolderOpen, File } from 'lucide-react';
+import { FolderOpen, File, Music } from 'lucide-react';
 import StarfieldBackground from './components/StarfieldBackground';
 import PlayerControls from './components/PlayerControls';
 import ProgressBar from './components/ProgressBar';
 import TrackList from './components/TrackList';
-import { mockTracks } from './data/tracks';
 import './index.css';
 
+const STORAGE_KEY = 'galactic-music-player-tracks';
+
+// Load tracks from localStorage
+const loadTracksFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Save tracks to localStorage
+const saveTracksToStorage = (tracks) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+  } catch (e) {
+    console.error('Failed to save tracks:', e);
+  }
+};
+
 function App() {
-  const [tracks, setTracks] = useState(mockTracks);
+  const [tracks, setTracks] = useState(loadTracksFromStorage);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -18,7 +38,12 @@ function App() {
   const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef(null);
 
-  const currentTrack = tracks[currentTrackIndex];
+  const currentTrack = tracks[currentTrackIndex] || null;
+
+  // Save tracks to localStorage whenever they change
+  useEffect(() => {
+    saveTracksToStorage(tracks);
+  }, [tracks]);
 
   // Update audio element when track changes
   useEffect(() => {
@@ -58,18 +83,18 @@ function App() {
 
   // Play/Pause toggle
   const handlePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+    if (!currentTrack || !audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
     }
+    setIsPlaying(!isPlaying);
   };
 
   // Next track
   const handleNext = () => {
+    if (tracks.length === 0) return;
     if (isShuffled) {
       const randomIndex = Math.floor(Math.random() * tracks.length);
       setCurrentTrackIndex(randomIndex);
@@ -81,8 +106,8 @@ function App() {
 
   // Previous track
   const handlePrevious = () => {
-    if (currentTime > 3) {
-      // If more than 3 seconds in, restart current track
+    if (tracks.length === 0) return;
+    if (currentTime > 3 && audioRef.current) {
       audioRef.current.currentTime = 0;
     } else {
       setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + tracks.length) % tracks.length);
@@ -232,9 +257,9 @@ function App() {
               {/* Now Playing */}
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-star-white mb-1">
-                  {currentTrack.title}
+                  {currentTrack ? currentTrack.title : 'No Track Selected'}
                 </h2>
-                <p className="text-star-white/60">{currentTrack.artist}</p>
+                <p className="text-star-white/60">{currentTrack ? currentTrack.artist : 'Add music to start'}</p>
               </div>
 
               {/* Progress Bar */}
@@ -276,15 +301,17 @@ function App() {
           </div>
 
           {/* Audio Element */}
-          <audio
-            ref={audioRef}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleTrackEnd}
-          >
-            <source src={getTrackSource(currentTrack)} type="audio/mpeg" />
-            Your browser does not support the audio element.
-          </audio>
+          {currentTrack && (
+            <audio
+              ref={audioRef}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={handleTrackEnd}
+            >
+              <source src={getTrackSource(currentTrack)} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          )}
         </motion.div>
       </div>
     </div>
