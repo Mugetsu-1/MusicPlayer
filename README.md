@@ -57,7 +57,7 @@ Packaged releases are available in the `release/` directory.
 
 ## Project Structure
 
-```
+```text
 src/
 ├── components/        # React components
 ├── constants/        # Configuration and constants
